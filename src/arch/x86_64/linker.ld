@@ -6,7 +6,7 @@ SECTIONS {
          {
                 /* ensure that multiboot header is at the beginning */
                 /* grub expects to find the multiboot header at the very beginning */
-                *(.multiboot_header)
+                KEEP(*(.multiboot_header))
          }
 
          .text :

@@ -18,6 +18,12 @@ clean:
 	@cargo clean
 	@rm -rf build
 
+debug:
+	@qemu-system-x86_64 -d int -no-reboot -cdrom $(iso)
+
+disasm:
+	@objdump -D build/kernel-x86_64.bin
+
 run: $(iso)
 	@qemu-system-x86_64 -cdrom $(iso)
 
@@ -30,9 +36,8 @@ $(iso): $(kernel) $(grub_cfg)
 	@grub-mkrescue -o $(iso) build/isofiles 2> /dev/null
 	@rm -r build/isofiles
 
-
 $(kernel): cargo $(rust_os) $(assembly_object_files) $(linker_script)
-	@ld -n -T $(linker_script) -o $(kernel) \
+	@ld -n --gc-sections -T $(linker_script) -o $(kernel) \
 		$(assembly_object_files) $(rust_os)
 
 cargo:
