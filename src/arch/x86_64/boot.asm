@@ -1,5 +1,5 @@
-        global start             ; global here exports the label and makes it pub. entrypoint start
-
+        global start            ; global here exports the label and makes it pub. entrypoint start
+        extern long_mode_start
         section .text           ; default section of executable code
         bits 32                 ; tells that the following instr are 32bit
 
@@ -13,8 +13,16 @@ start:
         call set_up_page_tables
         call enable_paging
 
-        mov dword [0xb8000], 0x2f4b2f4f ; move constant to memory location [location]
-        hlt
+        ;;  load the 64-bit GDT
+        lgdt [gdt64.pointer]
+
+        ;;  update selectors
+        mov ax, gdt64.data
+        mov ss, ax              ; stack selector
+        mov ds, ax              ; data selector
+        mov es, ax              ; extra selector
+
+        jmp gdt64.code:long_mode_start
 
 set_up_page_tables:
         ;; Map the first P4 entry to P3 table
@@ -154,4 +162,13 @@ stack_bottom:
 stack_top:
 
 
-
+        section .rodata
+gdt64:
+        dq 0                    ; zero entry we don't need segmentation
+.code:  equ $ - gdt64
+        dq (1<<44) | (1<<47) | (1<<41) | (1<<43) | (1<<53) ; code segment
+.data:  equ $ - gdt64
+        dq (1<<44) | (1<<47) | (1<<41)                     ; data segment
+.pointer:
+        dw $ - gdt64 - 1        ; .pointer - gdt64 - 1 is length (2 bytes)
+        dq gdt64                ; finally the address (8 bytes)
