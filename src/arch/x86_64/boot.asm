@@ -14,7 +14,7 @@ start:
         call enable_paging
 
         call set_up_SSE         ; Enable SSE extension
-        
+
         ;;  load the 64-bit GDT
         lgdt [gdt64.pointer]
 
