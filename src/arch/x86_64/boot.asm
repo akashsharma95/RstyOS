@@ -5,6 +5,9 @@
 
 start:
         mov esp, stack_top      ; Update stack pointer reg at start.
+        ;; The first six integer or pointer argument is passed as registers
+        ;; RDI, RSI, RDX, RCX, R8, and R9
+        mov edi, ebx            ; Move multiboot info pointer to edi so we can use it later
 
         call check_multiboot
         call check_cpuid
@@ -184,7 +187,7 @@ p3_table:
 p2_table:
         resb 4096
 stack_bottom:
-        resb 64                 ; Reserve 64 bytes for stact at bss section to avoid having unnecessary large file.
+        resb 4096               ; Reserve 64 bytes for stact at bss section to avoid having unnecessary large file.
 stack_top:
 
 

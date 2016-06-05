@@ -24,6 +24,9 @@ debug:
 disasm:
 	@objdump -D build/kernel-x86_64.bin
 
+section:
+	@objdump -h build/kernel-x86_64.bin
+
 run: $(iso)
 	@qemu-system-x86_64 -cdrom $(iso)
 

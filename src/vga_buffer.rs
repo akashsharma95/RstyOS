@@ -2,7 +2,6 @@ use core::ptr::Unique;
 use core::fmt;
 use spin::Mutex;
 
-
 const BUFFER_HEIGHT: usize = 25;
 const BUFFER_WIDTH: usize = 80;
 
@@ -73,6 +72,7 @@ pub struct Writer {
     buffer: Unique<Buffer>,
 }
 
+#[allow(dead_code)]
 impl Writer {
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
