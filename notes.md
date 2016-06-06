@@ -22,3 +22,4 @@
 * [Check SSE](http://wiki.osdev.org/SSE#Checking_for_SSE)
 * [UTF-8 for info](http://www.fileformat.info/info/unicode/utf8.htm)
 * [Calling Convention of linux](https://en.wikipedia.org/wiki/X86_calling_conventions#System_V_AMD64_ABI)
+* [Page Frame allocation](http://wiki.osdev.org/Page_Frame_Allocation#Physical_Memory_Allocators)

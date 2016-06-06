@@ -116,6 +116,9 @@ impl Writer {
         };
         self.buffer().chars[row] = [blank; BUFFER_WIDTH];
     }
+    pub fn change_color(&mut self, fgcolor: Color, bgcolor: Color) {
+        self.color_code = ColorCode::new(fgcolor, bgcolor);
+    }
 }
 
 pub fn clear_screen() {
