@@ -10,6 +10,9 @@ extern crate spin;
 mod vga_buffer;
 mod memory;
 
+// Bring FrameAllocator in scope for allocate_frame
+use memory::FrameAllocator;
+
 #[no_mangle]
 pub extern fn print_memory_areas(multiboot_info_addr: usize) {
     vga_buffer::clear_screen();
@@ -42,6 +45,15 @@ pub extern fn print_memory_areas(multiboot_info_addr: usize) {
              kernel_start, kernel_end);
     println!("multiboot_start: 0x{:x}, multiboot_end: 0x{:x}",
              multiboot_start, multiboot_end);
+    let mut frame_allocator = memory::AreaFrameAllocator::new(
+        kernel_start as usize, kernel_end as usize, multiboot_start,
+        multiboot_end, memory_map_tag.memory_areas());
+    for i in 0.. {
+        if let None = frame_allocator.allocate_frame() {
+            println!("allocated {} frames", i);
+            break;
+        }
+    }
 }
 #[no_mangle]
 pub extern fn os_start() {
