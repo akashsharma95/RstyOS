@@ -10,7 +10,7 @@ assembly_source_files := $(wildcard src/arch/$(arch)/*.asm)
 assembly_object_files := $(patsubst src/arch/$(arch)/%.asm, \
 	build/arch/$(arch)/%.o, $(assembly_source_files))
 
-.PHONY: all clean run iso cargo
+.PHONY: all clean run debug iso cargo gdb
 
 all: $(kernel)
 
@@ -18,7 +18,7 @@ clean:
 	@cargo clean
 	@rm -rf build
 
-debug:
+logint:
 	@qemu-system-x86_64 -d int -no-reboot -cdrom $(iso)
 
 disasm:
@@ -28,7 +28,13 @@ section:
 	@objdump -h build/kernel-x86_64.bin
 
 run: $(iso)
-	@qemu-system-x86_64 -cdrom $(iso)
+	@qemu-system-x86_64 -cdrom $(iso) -s
+
+gdb:
+	@rust-gdb "build/kernel-x86_64.bin" -ex "target remote :1234"
+
+debug: $(iso)
+	@qemu-system-x86_64 -cdrom $(iso) -s -S
 
 iso: $(iso)
 

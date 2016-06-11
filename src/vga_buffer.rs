@@ -23,6 +23,24 @@ macro_rules! print {
     });
 }
 
+pub unsafe fn print_error(fmt: fmt::Arguments) {
+    use core::fmt::Write;
+
+    let mut writer = Writer {
+        column_position: 0,
+        color_code: ColorCode::new(Color::Red, Color::Black),
+        buffer: Unique::new(0xb8000 as *mut _),
+    };
+    writer.new_line();
+    writer.write_fmt(fmt);
+}
+
+pub fn clear_screen() {
+    for _ in 0..BUFFER_HEIGHT {
+        println!("");
+    }
+}
+
 
 #[allow(dead_code)]
 #[repr(u8)]
@@ -93,11 +111,6 @@ impl Writer {
             }
         }
     }
-    pub fn write_str(&mut self, s: &str) {
-        for byte in s.bytes() {
-            self.write_byte(byte)
-        }
-    }
     fn buffer(&mut self) -> &mut Buffer {
         unsafe { self.buffer.get_mut() }
     }
@@ -118,12 +131,6 @@ impl Writer {
     }
     pub fn change_color(&mut self, fgcolor: Color, bgcolor: Color) {
         self.color_code = ColorCode::new(fgcolor, bgcolor);
-    }
-}
-
-pub fn clear_screen() {
-    for _ in 0..BUFFER_HEIGHT {
-        println!("");
     }
 }
 

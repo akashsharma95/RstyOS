@@ -1,17 +1,28 @@
 #![feature(lang_items)]
 #![feature(const_fn, unique)]
+#![feature(alloc, collections)]
 #![no_std]
 
 extern crate rlibc;
-extern crate multiboot2;
 extern crate spin;
+extern crate multiboot2;
+#[macro_use]
+extern crate bitflags;
+extern crate x86;
+#[macro_use]
+extern crate once;
+extern crate bit_field;
+
+extern crate hole_list_allocator;
+extern crate alloc;
+#[macro_use]
+extern crate collections;
 
 #[macro_use]
 mod vga_buffer;
 mod memory;
 
-// Bring FrameAllocator in scope for allocate_frame
-use memory::FrameAllocator;
+mod interrupts;
 
 #[no_mangle]
 pub extern fn print_memory_areas(multiboot_info_addr: usize) {
@@ -49,6 +60,7 @@ pub extern fn print_memory_areas(multiboot_info_addr: usize) {
         kernel_start as usize, kernel_end as usize, multiboot_start,
         multiboot_end, memory_map_tag.memory_areas());
     for i in 0.. {
+    	use memory::FrameAllocator;
         if let None = frame_allocator.allocate_frame() {
             println!("allocated {} frames", i);
             break;
@@ -79,12 +91,45 @@ pub extern fn rust_main(multiboot_info_address: usize) {
     // ATTENTION: we have a very small stack and no guard page
     os_start();
     print_memory_areas(multiboot_info_address);
+    let boot_info = unsafe { multiboot2::load(multiboot_info_address) };
+    enable_nxe_bit();
+    enable_write_protect_bit();
+
+    // set up guard page and map the heap pages
+    memory::init(boot_info);
+
+    // initialize our IDT
+    interrupts::init();
+
+    // provoke a page fault inside println
+    println!("{:?}", unsafe{ *(0xdeadbeaf as *mut u64) = 42 });
+
+    println!("It did not crash!");
 }
 
-#[lang = "eh_personality"] extern fn eh_personality() {}
+fn enable_nxe_bit() {
+    use x86::msr::{IA32_EFER, rdmsr, wrmsr};
 
+    let nxe_bit = 1 << 11;
+    unsafe {
+        let efer = rdmsr(IA32_EFER);
+        wrmsr(IA32_EFER, efer | nxe_bit);
+    }
+}
+
+fn enable_write_protect_bit() {
+    use x86::controlregs::{cr0, cr0_write};
+
+    let wp_bit = 1 << 16;
+    unsafe { cr0_write(cr0() | wp_bit) };
+}
+
+#[cfg(not(test))]
+#[lang = "eh_personality"] extern "C" fn eh_personality() {}
+
+#[cfg(not(test))]
 #[lang = "panic_fmt"]
-extern fn panic_fmt(fmt: ::core::fmt::Arguments,
+extern "C" fn panic_fmt(fmt: ::core::fmt::Arguments,
                     filen: &str, line_no: u32) -> ! {
     println!("\n\nPanicked in {} at line number {}: ", filen, line_no);
     println!("    {}", fmt);
