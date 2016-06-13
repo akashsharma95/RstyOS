@@ -8,6 +8,7 @@ pub struct Mapper {
     p4: Unique<Table<Level4>>,
 }
 
+#[allow(unused_variables)]
 impl Mapper {
     pub unsafe fn new() -> Mapper {
         Mapper { p4: Unique::new(table::P4) }

@@ -1,28 +1,60 @@
-use x86::segmentation::{self, SegmentSelector};
+use x86::segmentation::{SegmentSelector};
+use bit_field::BitField;
+use pic;
 
-pub struct Idt([Entry; 16]);
+macro_rules! make_idt_entry {
+    ($name:ident, $body:expr) => {{
+        fn body() {
+            $body
+        }
+        use self::idt::Entry;
+        #[naked]
+        unsafe extern fn $name() {
+            asm!("push rbp
+                  push r15
+                  push r14
+                  push r13
+                  push r12
+                  push r11
+                  push r10
+                  push r9
+                  push r8
+                  push rsi
+                  push rdi
+                  push rdx
+                  push rcx
+                  push rbx
+                  push rax
 
-impl Idt {
-    pub fn new() -> Idt {
-        Idt([Entry::missing(); 16])
-    }
+                  mov rsi, rsp
+                  push rsi
+                  
+                  call $0
 
-    pub fn set_handler(&mut self, entry: u8, handler: HandlerFunc) -> &mut EntryOptions {
-        self.0[entry as usize] = Entry::new(segmentation::cs(), handler);
-        &mut self.0[entry as usize].options
-    }
+                  add rsp, 8
 
-    pub fn load(&'static self) {
-        use x86::dtables::{DescriptorTablePointer, lidt};
-        use core::mem::size_of;
+                  pop rax
+                  pop rbx
+                  pop rcx
+                  pop rdx
+                  pop rdi
+                  pop rsi
+                  pop r8
+                  pop r9
+                  pop r10
+                  pop r11
+                  pop r12
+                  pop r13
+                  pop r14
+                  pop r15
+                  pop rbp
 
-        let ptr = DescriptorTablePointer {
-            base: self as *const _ as u64,
-            limit: (size_of::<Self>() - 1) as u16,
-        };
+                  iretq" :: "s"(body as fn()) :: "volatile", "intel");
+            intrinsics::unreachable();
+        }
 
-        unsafe { lidt(&ptr) };
-    }
+        Entry::new(segmentation::cs(), $name)
+    }}
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -36,10 +68,10 @@ pub struct Entry {
     reserved: u32,
 }
 
-pub type HandlerFunc = extern "C" fn() -> !;
+pub type HandlerFunc = unsafe extern fn();
 
 impl Entry {
-    fn new(gdt_selector: SegmentSelector, handler: HandlerFunc) -> Self {
+    pub fn new(gdt_selector: SegmentSelector, handler: HandlerFunc) -> Self {
         let pointer = handler as u64;
         Entry {
             gdt_selector: gdt_selector,
@@ -63,11 +95,9 @@ impl Entry {
     }
 }
 
-use bit_field::BitField;
-
 #[derive(Debug, Clone, Copy)]
 pub struct EntryOptions(BitField<u16>);
-
+#[allow(dead_code)]
 impl EntryOptions {
     fn minimal() -> Self {
         let mut options = BitField::new(0);
@@ -100,4 +130,34 @@ impl EntryOptions {
         self.0.set_range(0..3, index);
         self
     }
+}
+
+
+pub struct Idt([Entry; 256]);
+
+impl Idt {
+    pub fn new() -> Idt {
+        Idt([Entry::missing(); 256])
+    }
+    //  fn set_isr(&mut self, num: u8, entry: IdtEntry) {
+    pub fn set_handler(&mut self, index: u8, entry: Entry) -> &mut EntryOptions {
+        self.0[index as usize] = entry;
+        &mut self.0[index  as usize].options
+    }
+
+    pub fn load(&'static self) {
+        use x86::dtables::{DescriptorTablePointer, lidt};
+        use core::mem::size_of;
+
+        let ptr = DescriptorTablePointer {
+            base: self as *const _ as u64,
+            limit: (size_of::<Self>() - 1) as u16,
+        };
+
+        unsafe { lidt(&ptr) };
+    }
+}
+
+pub fn send_eoi_for(interrupt: isize) {
+    pic::eoi_for(interrupt);
 }

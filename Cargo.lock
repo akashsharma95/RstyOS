@@ -4,6 +4,7 @@ version = "0.1.0"
 dependencies = [
  "bit_field 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cpuio 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hole_list_allocator 0.1.0",
  "multiboot2 0.1.0 (git+https://github.com/phil-opp/multiboot2-elf64)",
  "once 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -25,6 +26,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "bitflags"
 version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "cpuio"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
