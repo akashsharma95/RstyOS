@@ -12,93 +12,78 @@ lazy_static! {
 	static ref IDT: idt::Idt = {
 		let mut idt = idt::Idt::new();
         idt.set_handler(0, make_idt_entry!(isr0, {
-            // do nothing for now
-            idt::send_eoi_for(0);
-            unsafe {  irq::enable(); }
+            unsafe { vga::print_error(format_args!("EXCEPTION: Divide By Zero")) };
+            loop { } 
         }));
 
         idt.set_handler(1, make_idt_entry!(isr1, {
-            // do nothing for now
-            idt::send_eoi_for(1);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Debug")) };
+            loop { } 
         }));
 
         idt.set_handler(2, make_idt_entry!(isr2, {
-            // do nothing for now
-            idt::send_eoi_for(2);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Non-maskable Interrupt")) };
+            loop { } 
         }));
 
         idt.set_handler(3, make_idt_entry!(isr3, {
-            // do nothing for now
-            idt::send_eoi_for(3);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Breakpoint")) };
+            loop { } 
         }));
 
         idt.set_handler(4, make_idt_entry!(isr4, {
-            // do nothing for now
-            idt::send_eoi_for(4);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Overflow")) };
+            loop { } 
         }));
 
         idt.set_handler(5, make_idt_entry!(isr5, {
-            // do nothing for now
-            idt::send_eoi_for(5);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Bound Range Exceeded")) };
+            loop { } 
         }));
 
         idt.set_handler(6, make_idt_entry!(isr6, {
-            // do nothing for now
-            idt::send_eoi_for(6);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Invalid Opcode")) };
+            loop { } 
         }));
 
         idt.set_handler(7, make_idt_entry!(isr7, {
-            // do nothing for now
-            idt::send_eoi_for(7);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Device Not Available")) };
+            loop { } 
         }));
 
         idt.set_handler(8, make_idt_entry!(isr8, {
-            // do nothing for now
-            idt::send_eoi_for(8);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Double Fault")) };
+            loop { } 
         }));
 
         idt.set_handler(9, make_idt_entry!(isr9, {
             // do nothing for now
             idt::send_eoi_for(9);
-            unsafe { irq::enable(); } 
+            unsafe { irq::enable(); }
         }));
 
         idt.set_handler(10, make_idt_entry!(isr10, {
-            // do nothing for now
-            idt::send_eoi_for(10);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Invalid TSS")) };
+            loop { } 
         }));
 
         idt.set_handler(11, make_idt_entry!(isr11, {
-            // do nothing for now
-            idt::send_eoi_for(11);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Segment Not Present")) };
+            loop { } 
         }));
 
         idt.set_handler(12, make_idt_entry!(isr12, {
-            // do nothing for now
-            idt::send_eoi_for(12);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Stack-Segment Fault")) };
+            loop { } 
         }));
 
         idt.set_handler(13, make_idt_entry!(isr13, {
-            // do nothing for now
-            idt::send_eoi_for(13);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: General Protection Fault")) };
+            loop { } 
         }));
 
         idt.set_handler(14, make_idt_entry!(isr14, {
             unsafe { vga::print_error(format_args!("EXCEPTION: PAGE FAULT")) };
-            idt::send_eoi_for(14);
-            unsafe { irq::enable(); }
             loop { } 
         }));
 
@@ -109,33 +94,28 @@ lazy_static! {
         }));
 
         idt.set_handler(16, make_idt_entry!(isr16, {
-            // do nothing for now
-            idt::send_eoi_for(16);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: x87 Floating-Point Exception")) };
+            loop { } 
         }));
 
         idt.set_handler(17, make_idt_entry!(isr17, {
-            // do nothing for now
-            idt::send_eoi_for(17);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Alignment Check")) };
+            loop { } 
         }));
 
         idt.set_handler(18, make_idt_entry!(isr18, {
-            // do nothing for now
-            idt::send_eoi_for(18);
-            unsafe { irq::enable(); } 
+           unsafe { vga::print_error(format_args!("EXCEPTION: Machine Check")) };
+            loop { } 
         }));
 
         idt.set_handler(19, make_idt_entry!(isr19, {
-            // do nothing for now
-            idt::send_eoi_for(19);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: SIMD Floating-Point Exception")) };
+            loop { } 
         }));
 
         idt.set_handler(20, make_idt_entry!(isr20, {
-            // do nothing for now
-            idt::send_eoi_for(20);
-            unsafe { irq::enable(); } 
+            unsafe { vga::print_error(format_args!("EXCEPTION: Virtualization Exception")) };
+            loop { } 
         }));
 
         idt.set_handler(21, make_idt_entry!(isr21, {
@@ -193,9 +173,8 @@ lazy_static! {
         }));
 
         idt.set_handler(30, make_idt_entry!(isr30, {
-            // do nothing for now
-            idt::send_eoi_for(30);
-            unsafe { irq::enable(); } 
+           unsafe { vga::print_error(format_args!("EXCEPTION: Security Exception")) };
+            loop { } 
         }));
 
         idt.set_handler(31, make_idt_entry!(isr31, {

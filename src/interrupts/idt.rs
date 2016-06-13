@@ -61,7 +61,7 @@ macro_rules! make_idt_entry {
 #[repr(C, packed)]
 pub struct Entry {
     pointer_low: u16,
-    gdt_selector: SegmentSelector,
+    gdt_selector: SegmentSelector, // SegmentSelector before!
     options: EntryOptions,
     pointer_middle: u16,
     pointer_high: u32,
