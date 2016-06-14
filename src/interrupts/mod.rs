@@ -58,7 +58,7 @@ lazy_static! {
 
         idt.set_handler(9, make_idt_entry!(isr9, {
             // do nothing for now
-            idt::send_eoi_for(9);
+            pic::eoi_for(9);
             unsafe { irq::enable(); }
         }));
 
@@ -89,7 +89,7 @@ lazy_static! {
 
         idt.set_handler(15, make_idt_entry!(isr15, {
             // do nothing for now
-            idt::send_eoi_for(15);
+            pic::eoi_for(15);
             unsafe { irq::enable(); } 
         }));
 
@@ -120,55 +120,55 @@ lazy_static! {
 
         idt.set_handler(21, make_idt_entry!(isr21, {
             // do nothing for now
-            idt::send_eoi_for(21);
+            pic::eoi_for(21);
             unsafe { irq::enable(); } 
         }));
 
         idt.set_handler(22, make_idt_entry!(isr22, {
             // do nothing for now
-            idt::send_eoi_for(22);
+            pic::eoi_for(22);
             unsafe { irq::enable(); } 
         }));
 
         idt.set_handler(23, make_idt_entry!(isr23, {
             // do nothing for now
-            idt::send_eoi_for(23);
+            pic::eoi_for(23);
             unsafe { irq::enable(); } 
         }));
 
         idt.set_handler(24, make_idt_entry!(isr24, {
             // do nothing for now
-            idt::send_eoi_for(24);
+            pic::eoi_for(24);
             unsafe { irq::enable(); } 
         }));
 
         idt.set_handler(25, make_idt_entry!(isr25, {
             // do nothing for now
-            idt::send_eoi_for(25);
+            pic::eoi_for(25);
             unsafe { irq::enable(); } 
         }));
 
         idt.set_handler(26, make_idt_entry!(isr26, {
             // do nothing for now
-            idt::send_eoi_for(26);
+            pic::eoi_for(26);
             unsafe { irq::enable(); } 
         }));
 
         idt.set_handler(27, make_idt_entry!(isr27, {
             // do nothing for now
-            idt::send_eoi_for(27);
+            pic::eoi_for(27);
             unsafe { irq::enable(); } 
         }));
 
         idt.set_handler(28, make_idt_entry!(isr28, {
             // do nothing for now
-            idt::send_eoi_for(28);
+            pic::eoi_for(28);
             unsafe { irq::enable(); } 
         }));
 
         idt.set_handler(29, make_idt_entry!(isr29, {
             // do nothing for now
-            idt::send_eoi_for(29);
+            pic::eoi_for(29);
             unsafe { irq::enable(); } 
         }));
 
@@ -179,7 +179,7 @@ lazy_static! {
 
         idt.set_handler(31, make_idt_entry!(isr31, {
             // do nothing for now
-            idt::send_eoi_for(31);
+            pic::eoi_for(31);
             unsafe { irq::enable(); } 
         }));
 
@@ -194,7 +194,7 @@ lazy_static! {
 			let scancode = keyboard.read();
 			STATE.lock().update_state(scancode);
             Keyboard.handle_keys(scancode as usize);
-            idt::send_eoi_for(33);
+            pic::eoi_for(33);
             unsafe { irq::enable(); } 
         }));
 

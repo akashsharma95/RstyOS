@@ -1,6 +1,5 @@
 use x86::segmentation::{SegmentSelector};
 use bit_field::BitField;
-use pic;
 
 macro_rules! make_idt_entry {
     ($name:ident, $body:expr) => {{
@@ -156,8 +155,4 @@ impl Idt {
 
         unsafe { lidt(&ptr) };
     }
-}
-
-pub fn send_eoi_for(interrupt: isize) {
-    pic::eoi_for(interrupt);
 }
