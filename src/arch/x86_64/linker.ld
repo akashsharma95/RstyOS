@@ -2,22 +2,34 @@ ENTRY(start)
 
 SECTIONS {
          . = 1M; /* sets the load address of the first section to 1 MiB. Hint: Below that is VGA buffer */
-         .boot :
-         {
-                /* ensure that multiboot header is at the beginning */
-                /* grub expects to find the multiboot header at the very beginning */
-                KEEP(*(.multiboot_header))
-         }
-          .text :
-         {
-                *(.text .text.*)
-         }
+         .rodata :
+  {
+    /* ensure that the multiboot header is at the beginning */
+    KEEP(*(.multiboot_header))
+    *(.rodata .rodata.*)
+    . = ALIGN(4K);
+  }
 
-         .rodata : {
-                *(.rodata .rodata.*)
-         }
+  .text :
+  {
+    *(.text .text.*)
+    . = ALIGN(4K);
+  }
 
-         .data.rel.ro : {
-                *(.data.rel.ro.local*) *(.data.rel.ro .data.rel.ro.*)
-         }
+  .data :
+  {
+    *(.data .data.*)
+    . = ALIGN(4K);
+  }
+
+  .bss :
+  {
+    *(.bss .bss.*)
+    . = ALIGN(4K);
+  }
+
+  .data.rel.ro : ALIGN(4K) {
+    *(.data.rel.ro.local*) *(.data.rel.ro .data.rel.ro.*)
+    . = ALIGN(4K);
+  }
 }
