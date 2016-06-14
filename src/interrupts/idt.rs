@@ -23,7 +23,6 @@ macro_rules! make_idt_entry {
                   push rdx
                   push rcx
                   push rbx
-                  push rax
 
                   mov rsi, rsp
                   push rsi
@@ -32,7 +31,6 @@ macro_rules! make_idt_entry {
 
                   add rsp, 8
 
-                  pop rax
                   pop rbx
                   pop rcx
                   pop rdx
@@ -150,7 +148,7 @@ impl Idt {
 
         let ptr = DescriptorTablePointer {
             base: self as *const _ as u64,
-            limit: (size_of::<Self>() - 1) as u16,
+            limit: size_of::<Idt>() as u16,
         };
 
         unsafe { lidt(&ptr) };
