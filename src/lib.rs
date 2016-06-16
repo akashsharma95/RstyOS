@@ -29,6 +29,7 @@ mod memory;
 mod interrupts;
 mod pic;
 mod keyboard;
+mod pci;
 
 #[no_mangle]
 pub extern fn print_memory_areas(multiboot_info_addr: usize) {
