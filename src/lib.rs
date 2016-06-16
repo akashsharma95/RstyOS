@@ -87,6 +87,10 @@ pub extern fn rust_main(multiboot_info_address: usize) {
 	// initialize our IDT
 	interrupts::init(); // laad
 	unsafe { x86::irq::enable(); }
+	vga::clear_console();
+	let color = vga::ColorCode::new(vga::Color::Black, vga::Color::Green);
+	vga::BUFFER.lock().change_color(color);
+	kprintln!("Welcome to RstyOS");
 	loop { }
 }
 

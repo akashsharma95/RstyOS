@@ -50,7 +50,7 @@ pub struct ColorCode(u8);
 const DEFAULT_COLOR: ColorCode = ColorCode::new(Color::LightGreen, Color::Black);
 
 impl ColorCode {
-	const fn new(foreground: Color, background: Color) -> ColorCode {
+	pub const fn new(foreground: Color, background: Color) -> ColorCode {
 		ColorCode((background as u8) << 4 | (foreground as u8))
 	}
 }
@@ -68,11 +68,13 @@ pub static BUFFER: Mutex<VgaBuffer> = Mutex::new(VgaBuffer {
 		color: DEFAULT_COLOR,
 	}; (CONSOLE_ROWS * CONSOLE_COLS) as usize],
 	position: 0,
+	color_code: DEFAULT_COLOR,
 });
 
 pub struct VgaBuffer {
 	buffer: [VgaCell; (CONSOLE_ROWS * CONSOLE_COLS) as usize],
 	position: usize,
+	color_code: ColorCode,
 }
 
 impl VgaBuffer {
@@ -86,7 +88,11 @@ impl VgaBuffer {
 		}
 	}
 
-	fn write_byte(&mut self, byte: u8, color: ColorCode) {
+	pub fn change_color(&mut self, color: ColorCode) {
+		self.color_code = color;
+	}
+
+	fn write_byte(&mut self, byte: u8) {
 		if byte == ('\n' as u8) {
 			// to get the current line, we divide by the length of a line
 			let current_line = (self.position as isize) / CONSOLE_COLS;
@@ -96,7 +102,7 @@ impl VgaBuffer {
 
 			*cell = VgaCell {
 				character: byte,
-				color: color,
+				color: self.color_code,
 			};
 			
 			self.position += 1;
@@ -151,9 +157,8 @@ impl VgaBuffer {
 
 impl fmt::Write for VgaBuffer {
 	fn write_str(&mut self, s: &str) -> ::core::fmt::Result {
-		let color = DEFAULT_COLOR;
 		for byte in s.bytes() {
-			self.write_byte(byte, color)
+			self.write_byte(byte)
 		}
 		Ok(())
 	}
@@ -186,6 +191,7 @@ pub unsafe fn print_error(fmt: fmt::Arguments) {
 			color: ColorCode::new(Color::LightGreen, Color::Red),
 		}; (CONSOLE_ROWS * CONSOLE_COLS) as usize],
 		position: 0,
+		color_code: ColorCode::new(Color::LightGreen, Color::Red),
 	};
 	writer.write_fmt(fmt);
 	writer.flush();
