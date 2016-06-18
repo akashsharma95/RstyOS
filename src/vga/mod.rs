@@ -86,6 +86,19 @@ impl VgaBuffer {
         }
     }
 
+    pub fn backsp(&mut self) {
+        {
+            let cell = &mut self.buffer[self.position-1];
+            *cell = VgaCell {
+                character: b' ',
+                color: self.color_code,
+            };
+            self.position -= 1;
+            cursor::set(self.position as u16);
+        }
+        self.flush();
+    }
+
     pub fn change_color(&mut self, color: ColorCode) {
         self.color_code = color;
     }

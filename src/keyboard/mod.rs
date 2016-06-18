@@ -1,5 +1,6 @@
 use spin::Mutex;
 use console;
+use vga;
 
 static KBDUS: [u8; 59] = *b"??1234567890-=??qwertyuiop[]\n?asdfghjkl;'`?\\zxcvbnm,./?*? ?";
 static KBDUS_SHIFT: [u8; 59] = *b"??!@#$%^&*()_+??QWERTYUIOP{}\n?ASDFGHJKL:\"~?|ZXCVBNM<>??*? ?";
@@ -41,7 +42,10 @@ impl Keyboard {
     pub fn handle_keys(&self, scancode: usize) {
         if scancode <= 59 {
             let state = STATE.lock();
-            if state.shift ^ state.caps {
+            if scancode == 14 {
+                vga::BUFFER.lock().backsp();
+            }
+            else if state.shift ^ state.caps {
                 console::write_to_buffer(KBDUS_SHIFT[scancode] as u8);
                 kprint!("{}", KBDUS_SHIFT[scancode] as char);
             } else {
