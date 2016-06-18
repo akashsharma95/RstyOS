@@ -108,6 +108,7 @@ static PCI: Mutex<Pci> = Mutex::new(Pci {
     data: unsafe { cpuio::Port::new(0xCFC) },
 });
 
+#[allow(dead_code)]
 pub struct FunctionIterator {
     done: bool,
     bus: u8,
@@ -158,6 +159,7 @@ impl Iterator for FunctionIterator {
     }
 }
 
+#[allow(dead_code)]
 pub fn functions() -> FunctionIterator {
     FunctionIterator {
         done: false,

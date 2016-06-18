@@ -18,7 +18,6 @@ pub fn initialize() {
 pub fn clear_console() {
     let mut b = BUFFER.lock();
     b.clear();
-    b.flush();
 }
 
 #[allow(dead_code)]
@@ -103,7 +102,6 @@ impl VgaBuffer {
                 character: byte,
                 color: self.color_code,
             };
-
             self.position += 1;
         }
 
@@ -118,7 +116,7 @@ impl VgaBuffer {
     fn scroll_up(&mut self) {
         let end = CONSOLE_ROWS * CONSOLE_COLS;
 
-        for i in CONSOLE_COLS..(end) {
+        for i in (CONSOLE_COLS+80)..(end) { // Added 80 to preserve top header
             let prev = i - CONSOLE_COLS;
             self.buffer[prev as usize] = self.buffer[i as usize];
         }
