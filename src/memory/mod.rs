@@ -15,22 +15,22 @@ pub fn init(boot_info: &BootInformation) {
     let elf_sections_tag = boot_info.elf_sections_tag().expect("Elf sections tag required");
 
     let kernel_start = elf_sections_tag.sections()
-                                       .filter(|s| s.is_allocated())
-                                       .map(|s| s.addr)
-                                       .min()
-                                       .unwrap();
+        .filter(|s| s.is_allocated())
+        .map(|s| s.addr)
+        .min()
+        .unwrap();
     let kernel_end = elf_sections_tag.sections()
-                                     .filter(|s| s.is_allocated())
-                                     .map(|s| s.addr + s.size)
-                                     .max()
-                                     .unwrap();
+        .filter(|s| s.is_allocated())
+        .map(|s| s.addr + s.size)
+        .max()
+        .unwrap();
 
     kprintln!("kernel start: {:#x}, kernel end: {:#x}",
-             kernel_start,
-             kernel_end);
+              kernel_start,
+              kernel_end);
     kprintln!("multiboot start: {:#x}, multiboot end: {:#x}",
-             boot_info.start_address(),
-             boot_info.end_address());
+              boot_info.start_address(),
+              boot_info.end_address());
 
     let mut frame_allocator = AreaFrameAllocator::new(kernel_start as usize,
                                                       kernel_end as usize,

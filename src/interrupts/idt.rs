@@ -1,4 +1,4 @@
-use x86::segmentation::{SegmentSelector};
+use x86::segmentation::SegmentSelector;
 use bit_field::BitField;
 
 macro_rules! make_idt_entry {
@@ -65,7 +65,7 @@ pub struct Entry {
     reserved: u32,
 }
 
-pub type HandlerFunc = unsafe extern fn();
+pub type HandlerFunc = unsafe extern "C" fn();
 
 impl Entry {
     pub fn new(gdt_selector: SegmentSelector, handler: HandlerFunc) -> Self {
@@ -139,7 +139,7 @@ impl Idt {
     //  fn set_isr(&mut self, num: u8, entry: IdtEntry) {
     pub fn set_handler(&mut self, index: u8, entry: Entry) -> &mut EntryOptions {
         self.0[index as usize] = entry;
-        &mut self.0[index  as usize].options
+        &mut self.0[index as usize].options
     }
 
     pub fn load(&'static self) {
