@@ -1,6 +1,6 @@
 use vga::{self, Color, ColorCode};
 
-use core;
+use core::{self, result};
 use pci;
 use multiboot2;
 use memory;
@@ -8,60 +8,52 @@ use memory;
 pub static WELCOME: &'static str = "  Welcome to RstyOS                                                             \
                                     ";
 static mut CON_BUFFER: [u8; 256] = [0; 256];
-static mut BUFFER_WRITE_IDX: usize = 0;
-static mut BUFFER_READ_IDX: usize = 0;
+static mut BUFFER_END_IDX: usize = 0;
 
 pub fn write_to_buffer(c: u8) {
     unsafe {
-        CON_BUFFER[BUFFER_WRITE_IDX] = c;
-        BUFFER_WRITE_IDX += 1;
+        CON_BUFFER[BUFFER_END_IDX] = c;
+        BUFFER_END_IDX += 1;
     }
 }
 
-fn read_from_buffer() -> &'static [u8] {
+pub fn pop_from_buffer() -> result::Result<(), ()> {
     unsafe {
-        let start = BUFFER_READ_IDX;
-        BUFFER_READ_IDX = BUFFER_WRITE_IDX;
-        &CON_BUFFER[start..BUFFER_WRITE_IDX]
+        if BUFFER_END_IDX != 0 {
+            BUFFER_END_IDX -= 1;
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 }
 
-pub fn gets(buf: &mut [u8]) -> &[u8] {
-    let mut last_index = 0;
-
-    loop {
-        let chars = read_from_buffer();
-        let chars_len = chars.len();
-
-        if chars_len == 0 {
-            continue;
-        }
-        for i in 0..chars_len {
-            buf[last_index + i] = chars[i];
-        }
-
-        last_index += chars_len;
-
-        if buf[last_index - 1]  == b'\n' {
-            break;
+pub fn input() -> &'static [u8] {
+    unsafe {
+        loop {
+            if BUFFER_END_IDX == 0 {
+                continue;
+            }
+            if CON_BUFFER[BUFFER_END_IDX - 1] == b'\n' {
+                let end = BUFFER_END_IDX - 1;
+                BUFFER_END_IDX = 0;
+                return &CON_BUFFER[0..end];
+            }
         }
     }
-
-    &buf[..last_index - 1]
 }
 
 pub fn shell(mb_info_addr: usize) -> ! {
     clear();
     loop {
         kprint!("> ");
-        let mut buf = [0; 128];
-        let input = core::str::from_utf8(gets(&mut buf[..])).unwrap();
+        let input = core::str::from_utf8(input()).unwrap();
         match input {
-            "lspci"   => lspci(),
+            "lspci" => lspci(),
             "memarea" => memarea(mb_info_addr),
-            "clear"   => clear(),
-            "yes"     => yes(),
-            _         => (),
+            "clear" => clear(),
+            "yes" => yes(),
+            e @ _ => kprintln!("Got: {}", e),
         }
     }
 }

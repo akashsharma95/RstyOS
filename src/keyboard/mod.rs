@@ -43,9 +43,10 @@ impl Keyboard {
         if scancode <= 59 {
             let state = STATE.lock();
             if scancode == 14 {
-                vga::BUFFER.lock().backsp();
-            }
-            else if state.shift ^ state.caps {
+                if console::pop_from_buffer() == Ok(()) {
+                    vga::BUFFER.lock().backsp();
+                }
+            } else if state.shift ^ state.caps {
                 console::write_to_buffer(KBDUS_SHIFT[scancode] as u8);
                 kprint!("{}", KBDUS_SHIFT[scancode] as char);
             } else {

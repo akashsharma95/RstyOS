@@ -88,7 +88,7 @@ impl VgaBuffer {
 
     pub fn backsp(&mut self) {
         {
-            let cell = &mut self.buffer[self.position-1];
+            let cell = &mut self.buffer[self.position - 1];
             *cell = VgaCell {
                 character: b' ',
                 color: self.color_code,
@@ -129,7 +129,8 @@ impl VgaBuffer {
     fn scroll_up(&mut self) {
         let end = CONSOLE_ROWS * CONSOLE_COLS;
 
-        for i in (CONSOLE_COLS+80)..(end) { // Added 80 to preserve top header
+        for i in (CONSOLE_COLS + 80)..(end) {
+            // Added 80 to preserve top header
             let prev = i - CONSOLE_COLS;
             self.buffer[prev as usize] = self.buffer[i as usize];
         }
