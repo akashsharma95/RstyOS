@@ -38,9 +38,9 @@ pub fn eoi_for(interrupt_number: isize) {
             i if i >= 40 => {
                 outb(0xA0, 0x20);
                 outb(0x20, 0x20);
-            },
+            }
             32...40 => outb(0x20, 0x20),
-            _ => {},
+            _ => {}
         }
     }
 }

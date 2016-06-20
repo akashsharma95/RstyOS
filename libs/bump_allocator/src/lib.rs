@@ -11,8 +11,7 @@ extern crate spin;
 pub const HEAP_START: usize = 0o_000_001_000_000_0000;
 pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
 
-static BUMP_ALLOCATOR: Mutex<BumpAllocator> = Mutex::new(
-    BumpAllocator::new(HEAP_START, HEAP_SIZE));
+static BUMP_ALLOCATOR: Mutex<BumpAllocator> = Mutex::new(BumpAllocator::new(HEAP_START, HEAP_SIZE));
 
 #[derive(Debug)]
 struct BumpAllocator {
@@ -65,32 +64,35 @@ pub fn align_up(addr: usize, align: usize) -> usize {
 }
 
 #[no_mangle]
-pub extern fn __rust_allocate(size: usize, align: usize) -> *mut u8 {
+pub extern "C" fn __rust_allocate(size: usize, align: usize) -> *mut u8 {
     BUMP_ALLOCATOR.lock().allocate(size, align).expect("out of memory")
 }
 
 #[no_mangle]
-pub extern fn __rust_deallocate(_ptr: *mut u8, _size: usize,
-    _align: usize)
-{
+pub extern "C" fn __rust_deallocate(_ptr: *mut u8, _size: usize, _align: usize) {
     // just leak it
 }
 
 #[no_mangle]
-pub extern fn __rust_usable_size(size: usize, _align: usize) -> usize {
+pub extern "C" fn __rust_usable_size(size: usize, _align: usize) -> usize {
     size
 }
 
 #[no_mangle]
-pub extern fn __rust_reallocate_inplace(_ptr: *mut u8, size: usize,
-    _new_size: usize, _align: usize) -> usize
-{
+pub extern "C" fn __rust_reallocate_inplace(_ptr: *mut u8,
+                                            size: usize,
+                                            _new_size: usize,
+                                            _align: usize)
+                                            -> usize {
     size
 }
 
 #[no_mangle]
-pub extern fn __rust_reallocate(ptr: *mut u8, size: usize, new_size: usize,
-                                align: usize) -> *mut u8 {
+pub extern "C" fn __rust_reallocate(ptr: *mut u8,
+                                    size: usize,
+                                    new_size: usize,
+                                    align: usize)
+                                    -> *mut u8 {
     use core::{ptr, cmp};
 
     // from: https://github.com/rust-lang/rust/blob/
@@ -102,4 +104,3 @@ pub extern fn __rust_reallocate(ptr: *mut u8, size: usize, new_size: usize,
     __rust_deallocate(ptr, size, align);
     new_ptr
 }
-

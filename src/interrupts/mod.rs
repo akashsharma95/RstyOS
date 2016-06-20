@@ -203,5 +203,5 @@ lazy_static! {
 }
 
 pub fn init() {
-	IDT.load();
+    IDT.load();
 }
