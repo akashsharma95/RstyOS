@@ -1,7 +1,48 @@
 use x86::segmentation::SegmentSelector;
 use bit_field::BitField;
 
-macro_rules! make_idt_entry {
+macro_rules! save_regs {
+    () => {
+        asm!("push rbp
+              push r15
+              push r14
+              push r13
+              push r12
+              push r11
+              push r10
+              push r9
+              push r8
+              push rsi
+              push rdi
+              push rdx
+              push rcx
+              push rbx
+              push rax"::::"volatile", "intel");
+    }
+}
+
+macro_rules! restore_regs {
+    () => {
+        asm!("pop rax
+              pop rbx
+              pop rcx
+              pop rdx
+              pop rdi
+              pop rsi
+              pop r8
+              pop r9
+              pop r10
+              pop r11
+              pop r12
+              pop r13
+              pop r14
+              pop r15
+              pop rbp" :::: "volatile", "intel");
+    }
+}
+
+// Make idt entry with a fake error code
+macro_rules! make_idt_entry_w_err {
     ($name:ident, $body:expr) => {{
         fn body() {
             $body
@@ -9,46 +50,43 @@ macro_rules! make_idt_entry {
         use self::idt::Entry;
         #[naked]
         unsafe extern fn $name() {
-            asm!("push rbp
-                  push r15
-                  push r14
-                  push r13
-                  push r12
-                  push r11
-                  push r10
-                  push r9
-                  push r8
+            save_regs!();
+            asm!("mov rsi, rsp
                   push rsi
-                  push rdi
-                  push rdx
-                  push rcx
-                  push rbx
+                  xor rax, rax
                   push rax
+                  
+                  call $0
 
-                  mov rsi, rsp
+                  pop rax
+                  add rsp, 8":: "s"(body as fn()) ::"volatile", "intel");
+            restore_regs!();
+            asm!("iretq" :::: "volatile", "intel");
+            intrinsics::unreachable();
+        }
+
+        Entry::new(segmentation::cs(), $name)
+    }}
+}
+
+// Make idt entry without error code
+macro_rules! make_idt_entry_wo_err {
+    ($name:ident, $body:expr) => {{
+        fn body() {
+            $body
+        }
+        use self::idt::Entry;
+        #[naked]
+        unsafe extern fn $name() {
+            save_regs!();
+            asm!("mov rsi, rsp
                   push rsi
                   
                   call $0
 
-                  add rsp, 8
-
-                  pop rax
-                  pop rbx
-                  pop rcx
-                  pop rdx
-                  pop rdi
-                  pop rsi
-                  pop r8
-                  pop r9
-                  pop r10
-                  pop r11
-                  pop r12
-                  pop r13
-                  pop r14
-                  pop r15
-                  pop rbp
-
-                  iretq" :: "s"(body as fn()) :: "volatile", "intel");
+                  add rsp, 8":: "s"(body as fn()) ::"volatile", "intel");
+            restore_regs!();
+            asm!("iretq" :::: "volatile", "intel");
             intrinsics::unreachable();
         }
 
