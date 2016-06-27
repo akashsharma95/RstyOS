@@ -4,6 +4,7 @@ use core::{self, result};
 use pci;
 use multiboot2;
 use memory;
+use keyboard::Keyboard;
 
 pub static WELCOME: &'static str = "  Welcome to RstyOS                                                             \
                                     ";
@@ -28,29 +29,33 @@ pub fn pop_from_buffer() -> result::Result<(), ()> {
     }
 }
 
-pub fn input() -> &'static [u8] {
+pub fn input(buf: &mut [u8]) -> &[u8] {
     unsafe {
         loop {
+            Keyboard.handle_keys();
             if BUFFER_END_IDX == 0 {
                 continue;
             }
             if CON_BUFFER[BUFFER_END_IDX - 1] == b'\n' {
                 let end = BUFFER_END_IDX - 1;
                 BUFFER_END_IDX = 0;
-                return &CON_BUFFER[0..end];
+                for i in 0..end {
+                    buf[i] = CON_BUFFER[i];
+                }
+                return buf;
             }
         }
     }
 }
 
-pub fn shell(mb_info_addr: usize) -> ! {
+pub fn shell() -> ! {
     clear();
     loop {
         kprint!("> ");
-        let input = core::str::from_utf8(input()).unwrap();
+        let mut buffer = [0; 128];
+        let input = core::str::from_utf8(input(&mut buffer[..])).unwrap();
         match input {
             "lspci" => lspci(),
-            "memarea" => memarea(mb_info_addr),
             "clear" => clear(),
             "yes" => yes(),
             e @ _ => kprintln!("Got: {}", e),

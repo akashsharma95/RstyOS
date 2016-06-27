@@ -8,6 +8,7 @@ dependencies = [
  "hole_list_allocator 0.1.0",
  "multiboot2 0.1.0 (git+https://github.com/phil-opp/multiboot2-elf64)",
  "once 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ringbuffer 0.1.0",
  "rlibc 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "spin 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "x86 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -72,6 +73,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "raw-cpuid"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "ringbuffer"
+version = "0.1.0"
 
 [[package]]
 name = "rlibc"

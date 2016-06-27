@@ -1,9 +1,12 @@
 use spin::Mutex;
 use console;
 use vga;
+use ringbuffer::RingBuffer;
 
 static KBDUS: [u8; 59] = *b"??1234567890-=??qwertyuiop[]\n?asdfghjkl;'`?\\zxcvbnm,./?*? ?";
 static KBDUS_SHIFT: [u8; 59] = *b"??!@#$%^&*()_+??QWERTYUIOP{}\n?ASDFGHJKL:\"~?|ZXCVBNM<>??*? ?";
+
+static mut BUFFER: RingBuffer<u8> = RingBuffer::new();
 
 // State of Modifier keys
 pub static STATE: Mutex<Modifiers> = Mutex::new(Modifiers {
@@ -39,20 +42,29 @@ impl Modifiers {
 pub struct Keyboard;
 
 impl Keyboard {
-    pub fn handle_keys(&self, scancode: usize) {
-        if scancode <= 59 {
-            let state = STATE.lock();
-            if scancode == 14 {
-                if console::pop_from_buffer() == Ok(()) {
-                    vga::BUFFER.lock().backsp();
+    pub fn handle_keypress(&self, scancode: u8) {
+        unsafe { BUFFER.push(scancode).expect("Could not push a key to the buffer"); }
+    }
+
+    pub fn handle_keys(&self) {
+        unsafe {
+            if let Some(scancode) = BUFFER.pop() {
+                if scancode <= 59 {
+                    let state = STATE.lock();
+                    if scancode == 14 {
+                        if console::pop_from_buffer() == Ok(()) {
+                            vga::BUFFER.lock().backsp();
+                        }
+                    } else if state.shift ^ state.caps {
+                        console::write_to_buffer(KBDUS_SHIFT[scancode as usize] as u8);
+                        kprint!("{}", KBDUS_SHIFT[scancode as usize] as char);
+                    } else {
+                        console::write_to_buffer(KBDUS[scancode as usize] as u8);
+                        kprint!("{}", KBDUS[scancode as usize] as char);
+                    }
                 }
-            } else if state.shift ^ state.caps {
-                console::write_to_buffer(KBDUS_SHIFT[scancode] as u8);
-                kprint!("{}", KBDUS_SHIFT[scancode] as char);
-            } else {
-                console::write_to_buffer(KBDUS[scancode] as u8);
-                kprint!("{}", KBDUS[scancode] as char);
             }
         }
+        
     }
 }

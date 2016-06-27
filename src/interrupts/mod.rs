@@ -193,7 +193,7 @@ lazy_static! {
             let mut keyboard: Port<u8> = unsafe { Port::new(0x60) };
 			let scancode = keyboard.read();
 			STATE.lock().update_state(scancode);
-            Keyboard.handle_keys(scancode as usize);
+            Keyboard.handle_keypress(scancode);
             pic::eoi_for(33);
             unsafe { irq::enable(); } 
         }));

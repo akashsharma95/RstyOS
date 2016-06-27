@@ -3,6 +3,7 @@
 #![feature(const_fn, unique)]
 #![feature(alloc, collections)]
 #![feature(asm)]
+#![feature(drop_types_in_const)]
 #![feature(naked_functions)]
 #![no_std]
 
@@ -21,6 +22,7 @@ extern crate alloc;
 #[macro_use]
 extern crate collections;
 extern crate cpuio;
+extern crate ringbuffer;
 
 #[macro_use]
 mod vga;
@@ -47,7 +49,7 @@ pub extern "C" fn rust_main(multiboot_info_address: usize) {
     }
 
     vga::clear_console();
-    console::shell(multiboot_info_address);
+    console::shell();
 }
 
 fn enable_nxe_bit() {

@@ -51,15 +51,15 @@ macro_rules! make_idt_entry_w_err {
         #[naked]
         unsafe extern fn $name() {
             save_regs!();
-            asm!("mov rsi, rsp
-                  push rsi
-                  xor rax, rax
+            asm!("xor rax, rax
                   push rax
-                  
+                  mov rsi, rsp
+                  push rsi
+
                   call $0
 
-                  pop rax
-                  add rsp, 8":: "s"(body as fn()) ::"volatile", "intel");
+                  add rsp, 8
+                  pop rax":: "s"(body as fn()) ::"volatile", "intel");
             restore_regs!();
             asm!("iretq" :::: "volatile", "intel");
             intrinsics::unreachable();
@@ -81,7 +81,7 @@ macro_rules! make_idt_entry_wo_err {
             save_regs!();
             asm!("mov rsi, rsp
                   push rsi
-                  
+
                   call $0
 
                   add rsp, 8":: "s"(body as fn()) ::"volatile", "intel");
