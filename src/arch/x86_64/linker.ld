@@ -1,8 +1,9 @@
 ENTRY(start)
 
 SECTIONS {
-         . = 1M; /* sets the load address of the first section to 1 MiB. Hint: Below that is VGA buffer */
-         .rodata :
+  . = 1M; /* sets the load address of the first section to 1 MiB. Hint: Below that is VGA buffer */
+
+  .rodata :
   {
     /* ensure that the multiboot header is at the beginning */
     KEEP(*(.multiboot_header))
@@ -28,8 +29,25 @@ SECTIONS {
     . = ALIGN(4K);
   }
 
+  .got :
+  {
+    *(.got)
+    . = ALIGN(4K);
+  }
+
+  .got.plt :
+  {
+    *(.got.plt)
+    . = ALIGN(4K);
+  }
+
   .data.rel.ro : ALIGN(4K) {
     *(.data.rel.ro.local*) *(.data.rel.ro .data.rel.ro.*)
+    . = ALIGN(4K);
+  }
+
+  .gcc_except_table : ALIGN(4K) {
+    *(.gcc_except_table)
     . = ALIGN(4K);
   }
 }

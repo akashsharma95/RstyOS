@@ -80,3 +80,9 @@ extern "C" fn panic_fmt(fmt: ::core::fmt::Arguments, filen: &str, line_no: u32) 
     kprintln!("    {}", fmt);
     loop {}
 }
+
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern "C" fn _Unwind_Resume() -> ! {
+    loop {}
+}

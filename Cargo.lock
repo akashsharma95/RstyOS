@@ -11,7 +11,7 @@ dependencies = [
  "ringbuffer 0.1.0",
  "rlibc 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "spin 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "x86 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "x86 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -95,7 +95,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "x86"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "raw-cpuid 2.0.1 (registry+https://github.com/rust-lang/crates.io-index)",

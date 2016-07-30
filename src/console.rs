@@ -58,7 +58,7 @@ pub fn shell() -> ! {
             "lspci" => lspci(),
             "clear" => clear(),
             "yes" => yes(),
-            e @ _ => kprintln!("Got: {}", e),
+            e @ _ => kprintln!("Got: |{}|", e),
         }
     }
 }
