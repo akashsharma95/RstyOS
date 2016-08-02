@@ -3,8 +3,7 @@ use bit_field::BitField;
 
 macro_rules! save_regs {
     () => {
-        asm!("push rbp
-              push r15
+        asm!("push r15
               push r14
               push r13
               push r12
@@ -12,8 +11,9 @@ macro_rules! save_regs {
               push r10
               push r9
               push r8
-              push rsi
               push rdi
+              push rsi
+              push rbp
               push rdx
               push rcx
               push rbx
@@ -27,8 +27,9 @@ macro_rules! restore_regs {
               pop rbx
               pop rcx
               pop rdx
-              pop rdi
+              pop rbp
               pop rsi
+              pop rdi
               pop r8
               pop r9
               pop r10
@@ -36,8 +37,7 @@ macro_rules! restore_regs {
               pop r12
               pop r13
               pop r14
-              pop r15
-              pop rbp" :::: "volatile", "intel");
+              pop r15" :::: "volatile", "intel");
     }
 }
 
@@ -50,18 +50,14 @@ macro_rules! make_idt_entry_w_err {
         use self::idt::Entry;
         #[naked]
         unsafe extern fn $name() {
+            asm!("push 0" :::: "volatile", "intel"); // push fake error code 0
             save_regs!();
-            asm!("xor rax, rax
-                  push rax
-                  mov rsi, rsp
-                  push rsi
+            asm!("mov rdi, rsp
 
-                  call $0
-
-                  add rsp, 8
-                  pop rax":: "s"(body as fn()) ::"volatile", "intel");
+                  call $0":: "s"(body as fn()) ::"volatile", "intel");
             restore_regs!();
-            asm!("iretq" :::: "volatile", "intel");
+            asm!("add rsp, 8
+                 iretq" :::: "volatile", "intel");
             intrinsics::unreachable();
         }
 
@@ -79,14 +75,12 @@ macro_rules! make_idt_entry_wo_err {
         #[naked]
         unsafe extern fn $name() {
             save_regs!();
-            asm!("mov rsi, rsp
-                  push rsi
+            asm!("mov rdi, rsp
 
-                  call $0
-
-                  add rsp, 8":: "s"(body as fn()) ::"volatile", "intel");
+                  call $0":: "s"(body as fn()) ::"volatile", "intel");
             restore_regs!();
-            asm!("iretq" :::: "volatile", "intel");
+            asm!("add rsp, 8
+                 iretq" :::: "volatile", "intel");
             intrinsics::unreachable();
         }
 

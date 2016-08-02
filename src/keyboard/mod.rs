@@ -1,12 +1,10 @@
 use spin::Mutex;
 use console;
 use vga;
-use ringbuffer::RingBuffer;
+use cpuio::Port;
 
 static KBDUS: [u8; 59] = *b"??1234567890-=??qwertyuiop[]\n?asdfghjkl;'`?\\zxcvbnm,./?*? ?";
 static KBDUS_SHIFT: [u8; 59] = *b"??!@#$%^&*()_+??QWERTYUIOP{}\n?ASDFGHJKL:\"~?|ZXCVBNM<>??*? ?";
-
-static mut BUFFER: RingBuffer<u8> = RingBuffer::new();
 
 // State of Modifier keys
 pub static STATE: Mutex<Modifiers> = Mutex::new(Modifiers {
@@ -41,30 +39,31 @@ impl Modifiers {
 
 pub struct Keyboard;
 
-impl Keyboard {
-    pub fn handle_keypress(&self, scancode: u8) {
-        unsafe { BUFFER.push(scancode).expect("Could not push a key to the buffer"); }
-    }
+pub enum KeyChar {
+    Some(char),
+    Backsp,
+    None
+}
 
-    pub fn handle_keys(&self) {
-        unsafe {
-            if let Some(scancode) = BUFFER.pop() {
-                if scancode <= 59 {
-                    let state = STATE.lock();
-                    if scancode == 14 {
-                        if console::pop_from_buffer() == Ok(()) {
-                            vga::BUFFER.lock().backsp();
-                        }
-                    } else if state.shift ^ state.caps {
-                        console::write_to_buffer(KBDUS_SHIFT[scancode as usize] as u8);
-                        kprint!("{}", KBDUS_SHIFT[scancode as usize] as char);
-                    } else {
-                        console::write_to_buffer(KBDUS[scancode as usize] as u8);
-                        kprint!("{}", KBDUS[scancode as usize] as char);
-                    }
-                }
+impl Keyboard {
+    pub fn kbdintr() {
+        console::consoleintr();
+    }
+    pub fn kbdgetchar() -> KeyChar {
+        let kbd = unsafe { Port::new(0x60) };
+        let scancode = kbd.read();
+        STATE.lock().update_state(scancode);
+        if scancode <= 59 {
+            let state = STATE.lock();
+            if scancode == 14 {
+                return KeyChar::Backsp;
+            } else if state.shift ^ state.caps {
+                return KeyChar::Some(KBDUS_SHIFT[scancode as usize] as char);
+            } else {
+                return KeyChar::Some(KBDUS[scancode as usize] as char);
             }
         }
-        
+        KeyChar::None
     }
+
 }

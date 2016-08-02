@@ -190,10 +190,7 @@ lazy_static! {
         }));
 
         idt.set_handler(33, make_idt_entry_w_err!(isr33, {
-            let mut keyboard: Port<u8> = unsafe { Port::new(0x60) };
-			let scancode = keyboard.read();
-			STATE.lock().update_state(scancode);
-            Keyboard.handle_keypress(scancode);
+            Keyboard::kbdintr();
             pic::eoi_for(33);
             unsafe { irq::enable(); } 
         }));

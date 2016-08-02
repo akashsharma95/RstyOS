@@ -1,53 +1,34 @@
 use vga::{self, Color, ColorCode};
-
+use spin::Mutex;
 use core::{self, result};
 use pci;
 use multiboot2;
 use memory;
 use keyboard::Keyboard;
+// TODO:
+//    - get lock to cons buffer to write
+//    - add write_to_cons
+//    - consoleintr
+//    - remove ringbuffer
+
+struct ConsoleBuffer {
+    buf: [u8; 256],
+    ridx: usize,
+    widx: usize,
+    eidx: usize,
+}
+
+static mut CONS_BUF: Mutex<ConsoleBuffer> = Mutex::new(
+    ConsoleBuffer {
+        buf: [0; 256],
+        ridx: 0,
+        widx: 0,
+        eidx: 0,
+    }
+);
 
 pub static WELCOME: &'static str = "  Welcome to RstyOS                                                             \
                                     ";
-static mut CON_BUFFER: [u8; 256] = [0; 256];
-static mut BUFFER_END_IDX: usize = 0;
-
-pub fn write_to_buffer(c: u8) {
-    unsafe {
-        CON_BUFFER[BUFFER_END_IDX] = c;
-        BUFFER_END_IDX += 1;
-    }
-}
-
-pub fn pop_from_buffer() -> result::Result<(), ()> {
-    unsafe {
-        if BUFFER_END_IDX != 0 {
-            BUFFER_END_IDX -= 1;
-            Ok(())
-        } else {
-            Err(())
-        }
-    }
-}
-
-pub fn input(buf: &mut [u8]) -> &[u8] {
-    unsafe {
-        loop {
-            Keyboard.handle_keys();
-            if BUFFER_END_IDX == 0 {
-                continue;
-            }
-            if CON_BUFFER[BUFFER_END_IDX - 1] == b'\n' {
-                let end = BUFFER_END_IDX - 1;
-                BUFFER_END_IDX = 0;
-                for i in 0..end {
-                    buf[i] = CON_BUFFER[i];
-                }
-                return buf;
-            }
-        }
-    }
-}
-
 pub fn shell() -> ! {
     clear();
     loop {
