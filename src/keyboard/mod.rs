@@ -40,7 +40,7 @@ impl Modifiers {
 pub struct Keyboard;
 
 pub enum KeyChar {
-    Some(char),
+    Some(u8),
     Backsp,
     None
 }
@@ -50,17 +50,17 @@ impl Keyboard {
         console::consoleintr();
     }
     pub fn kbdgetchar() -> KeyChar {
-        let kbd = unsafe { Port::new(0x60) };
-        let scancode = kbd.read();
+        let mut port = unsafe { Port::new(0x60) };
+        let scancode = port.read();
         STATE.lock().update_state(scancode);
         if scancode <= 59 {
             let state = STATE.lock();
             if scancode == 14 {
                 return KeyChar::Backsp;
             } else if state.shift ^ state.caps {
-                return KeyChar::Some(KBDUS_SHIFT[scancode as usize] as char);
+                return KeyChar::Some(KBDUS_SHIFT[scancode as usize] as u8);
             } else {
-                return KeyChar::Some(KBDUS[scancode as usize] as char);
+                return KeyChar::Some(KBDUS[scancode as usize] as u8);
             }
         }
         KeyChar::None

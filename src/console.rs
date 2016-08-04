@@ -4,23 +4,24 @@ use core::{self, result};
 use pci;
 use multiboot2;
 use memory;
-use keyboard::Keyboard;
+use keyboard::{Keyboard, KeyChar};
 // TODO:
 //    - get lock to cons buffer to write
 //    - add write_to_cons
 //    - consoleintr
 //    - remove ringbuffer
 
-struct ConsoleBuffer {
-    buf: [u8; 256],
+const BUF_SIZE: usize = 256;
+pub struct ConsoleBuffer {
+    buf: [u8; BUF_SIZE],
     ridx: usize,
     widx: usize,
     eidx: usize,
 }
 
-static mut CONS_BUF: Mutex<ConsoleBuffer> = Mutex::new(
+pub static CONS_BUF: Mutex<ConsoleBuffer> = Mutex::new(
     ConsoleBuffer {
-        buf: [0; 256],
+        buf: [0; BUF_SIZE],
         ridx: 0,
         widx: 0,
         eidx: 0,
@@ -29,19 +30,58 @@ static mut CONS_BUF: Mutex<ConsoleBuffer> = Mutex::new(
 
 pub static WELCOME: &'static str = "  Welcome to RstyOS                                                             \
                                     ";
+
+pub fn consoleintr() {
+    let mut cons = CONS_BUF.lock();
+    match Keyboard::kbdgetchar() {
+        KeyChar::Some(ch) => {
+            if cons.widx > cons.ridx || cons.widx == 0 && cons.ridx == 0 {
+                let idx = cons.widx;
+                cons.buf[idx % BUF_SIZE] = ch;
+                cons.widx = cons.widx + 1;
+                kprint!("{}", ch as char);
+            }
+        },
+        KeyChar::Backsp => {
+            let idx = cons.widx;
+            if idx != 0 {
+                cons.buf[idx % BUF_SIZE] = 0;
+                cons.widx = cons.widx - 1;
+                vga::BUFFER.lock().backsp();
+            }
+        },
+        KeyChar::None => {},
+    }
+}
+
+pub fn consoleread(buf: &mut [u8]) {
+    loop {
+
+        let mut cons = CONS_BUF.lock();
+        if cons.ridx < cons.widx {
+            if cons.buf[cons.ridx % BUF_SIZE] == '\n' as u8 {
+                return;
+            }
+            buf[cons.ridx % BUF_SIZE] = cons.buf[cons.ridx % BUF_SIZE];
+            cons.ridx = cons.ridx + 1;
+        }
+    }
+}
+
 pub fn shell() -> ! {
     clear();
     loop {
-        kprint!("> ");
-        let mut buffer = [0; 128];
-        let input = core::str::from_utf8(input(&mut buffer[..])).unwrap();
-        match input {
-            "lspci" => lspci(),
-            "clear" => clear(),
-            "yes" => yes(),
-            e @ _ => kprintln!("Got: |{}|", e),
-        }
-    }
+         kprint!("> ");
+         let mut buf = [0; BUF_SIZE];
+         consoleread(&mut buf[..]);
+         let input = core::str::from_utf8(&buf).unwrap();
+         match input {
+             "lspci" => lspci(),
+             "clear" => clear(),
+             "yes" => yes(),
+             e @ _ => kprintln!("Got: |{}|", e),
+         }
+     }
 }
 
 fn lspci() {

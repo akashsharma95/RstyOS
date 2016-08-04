@@ -50,13 +50,13 @@ macro_rules! make_idt_entry_w_err {
         use self::idt::Entry;
         #[naked]
         unsafe extern fn $name() {
-            asm!("push 0" :::: "volatile", "intel"); // push fake error code 0
+            //asm!("push 0" :::: "volatile", "intel"); // push fake error code 0
             save_regs!();
             asm!("mov rdi, rsp
 
                   call $0":: "s"(body as fn()) ::"volatile", "intel");
             restore_regs!();
-            asm!("add rsp, 8
+            asm!("add rsp, 0
                  iretq" :::: "volatile", "intel");
             intrinsics::unreachable();
         }
@@ -79,7 +79,7 @@ macro_rules! make_idt_entry_wo_err {
 
                   call $0":: "s"(body as fn()) ::"volatile", "intel");
             restore_regs!();
-            asm!("add rsp, 8
+            asm!("add rsp, 0
                  iretq" :::: "volatile", "intel");
             intrinsics::unreachable();
         }
