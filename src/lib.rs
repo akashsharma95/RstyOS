@@ -47,7 +47,11 @@ pub extern "C" fn rust_main(multiboot_info_address: usize) {
     unsafe {
         x86::irq::enable();
     }
-
+    //let x = [1,2,3,4,5,6,7,8,9];
+    //unsafe{ *(0xdeadbeaf as *mut u64) = x[4] };
+    // unsafe {
+    //     asm!("mov dx, 0; div dx" ::: "ax", "dx" : "volatile", "intel");
+    // }
     vga::clear_console();
     console::shell();
 }

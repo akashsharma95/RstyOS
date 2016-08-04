@@ -19,51 +19,55 @@ pub struct ConsoleBuffer {
     eidx: usize,
 }
 
-pub static CONS_BUF: Mutex<ConsoleBuffer> = Mutex::new(
+pub static mut CONS_BUF: ConsoleBuffer = 
     ConsoleBuffer {
         buf: [0; BUF_SIZE],
         ridx: 0,
         widx: 0,
         eidx: 0,
-    }
-);
+    };
 
 pub static WELCOME: &'static str = "  Welcome to RstyOS                                                             \
                                     ";
 
 pub fn consoleintr() {
-    let mut cons = CONS_BUF.lock();
-    match Keyboard::kbdgetchar() {
-        KeyChar::Some(ch) => {
-            if cons.widx > cons.ridx || cons.widx == 0 && cons.ridx == 0 {
-                let idx = cons.widx;
-                cons.buf[idx % BUF_SIZE] = ch;
-                cons.widx = cons.widx + 1;
-                kprint!("{}", ch as char);
-            }
-        },
-        KeyChar::Backsp => {
-            let idx = cons.widx;
-            if idx != 0 {
-                cons.buf[idx % BUF_SIZE] = 0;
-                cons.widx = cons.widx - 1;
-                vga::BUFFER.lock().backsp();
-            }
-        },
-        KeyChar::None => {},
+    unsafe {
+        match Keyboard::kbdgetchar() {
+            KeyChar::Some(ch) => {
+                if CONS_BUF.widx > CONS_BUF.ridx || CONS_BUF.widx == 0 && CONS_BUF.ridx == 0 {
+                    CONS_BUF.buf[CONS_BUF.widx] = ch;
+                    CONS_BUF.widx = (CONS_BUF.widx + 1) % BUF_SIZE;
+                    kprint!("{}", ch as char);
+                }
+            },
+            KeyChar::Backsp => {
+                if CONS_BUF.widx != 0 {
+                    CONS_BUF.buf[CONS_BUF.widx] = 0;
+                    CONS_BUF.widx = CONS_BUF.widx - 1;
+                    vga::BUFFER.lock().backsp();
+                }
+            },
+            KeyChar::None => {},
+        }
     }
 }
 
-pub fn consoleread(buf: &mut [u8]) {
+pub fn consoleread(buf: &mut [u8]) -> &[u8] {
     loop {
-
-        let mut cons = CONS_BUF.lock();
-        if cons.ridx < cons.widx {
-            if cons.buf[cons.ridx % BUF_SIZE] == '\n' as u8 {
-                return;
+        unsafe {
+            if CONS_BUF.widx == 0 && CONS_BUF.ridx == 0 {
+                continue;
             }
-            buf[cons.ridx % BUF_SIZE] = cons.buf[cons.ridx % BUF_SIZE];
-            cons.ridx = cons.ridx + 1;
+            else if CONS_BUF.buf[CONS_BUF.widx - 1] == b'\n' {
+                // kprint!("{}", core::str::from_utf8(&CONS_BUF.buf[CONS_BUF.ridx..CONS_BUF.widx]).unwrap());
+                let end = CONS_BUF.widx;
+                for i in CONS_BUF.ridx..CONS_BUF.widx {
+                    buf[i] = CONS_BUF.buf[i];
+                }
+                CONS_BUF.ridx = 0;
+                CONS_BUF.widx = 0;
+                return &buf[0..end];
+            }
         }
     }
 }
@@ -71,17 +75,17 @@ pub fn consoleread(buf: &mut [u8]) {
 pub fn shell() -> ! {
     clear();
     loop {
-         kprint!("> ");
-         let mut buf = [0; BUF_SIZE];
-         consoleread(&mut buf[..]);
-         let input = core::str::from_utf8(&buf).unwrap();
-         match input {
-             "lspci" => lspci(),
-             "clear" => clear(),
-             "yes" => yes(),
-             e @ _ => kprintln!("Got: |{}|", e),
-         }
-     }
+        kprint!("> ");
+        let mut buf = [0; BUF_SIZE];
+        let input = core::str::from_utf8(consoleread(&mut buf[..])).unwrap();
+        kprintln!("{}", input);
+        match input {
+            "lspci" => lspci(),
+            "clear" => clear(),
+            "yes" => yes(),
+            e @ _ => kprintln!("Got: |{}|", e),
+        }
+    }
 }
 
 fn lspci() {
