@@ -1,30 +1,24 @@
 use vga::{self, Color, ColorCode};
 use spin::Mutex;
-use core::{self, result};
+use core::{self};
 use pci;
 use multiboot2;
 use memory;
 use keyboard::{Keyboard, KeyChar};
-// TODO:
-//    - get lock to cons buffer to write
-//    - add write_to_cons
-//    - consoleintr
-//    - remove ringbuffer
+use collections::vec::Vec;
 
 const BUF_SIZE: usize = 256;
 pub struct ConsoleBuffer {
     buf: [u8; BUF_SIZE],
     ridx: usize,
     widx: usize,
-    eidx: usize,
 }
 
-pub static mut CONS_BUF: ConsoleBuffer = 
+pub static mut CONS_BUF: ConsoleBuffer =
     ConsoleBuffer {
         buf: [0; BUF_SIZE],
         ridx: 0,
         widx: 0,
-        eidx: 0,
     };
 
 pub static WELCOME: &'static str = "  Welcome to RstyOS                                                             \
@@ -52,21 +46,20 @@ pub fn consoleintr() {
     }
 }
 
-pub fn consoleread(buf: &mut [u8]) -> &[u8] {
+pub fn consoleread() -> Vec<u8> {
+    let mut buf: Vec<u8> = Vec::new();
     loop {
         unsafe {
             if CONS_BUF.widx == 0 && CONS_BUF.ridx == 0 {
                 continue;
             }
             else if CONS_BUF.buf[CONS_BUF.widx - 1] == b'\n' {
-                // kprint!("{}", core::str::from_utf8(&CONS_BUF.buf[CONS_BUF.ridx..CONS_BUF.widx]).unwrap());
-                let end = CONS_BUF.widx;
-                for i in CONS_BUF.ridx..CONS_BUF.widx {
-                    buf[i] = CONS_BUF.buf[i];
+                for i in CONS_BUF.ridx..CONS_BUF.widx-1 {
+                    buf.push(CONS_BUF.buf[i]);
                 }
                 CONS_BUF.ridx = 0;
                 CONS_BUF.widx = 0;
-                return &buf[0..end];
+                return buf;
             }
         }
     }
@@ -76,14 +69,13 @@ pub fn shell() -> ! {
     clear();
     loop {
         kprint!("> ");
-        let mut buf = [0; BUF_SIZE];
-        let input = core::str::from_utf8(consoleread(&mut buf[..])).unwrap();
-        kprintln!("{}", input);
+        let buf = consoleread();
+        let input = core::str::from_utf8(buf.as_slice()).unwrap();
         match input {
             "lspci" => lspci(),
             "clear" => clear(),
             "yes" => yes(),
-            e @ _ => kprintln!("Got: |{}|", e),
+            e @ _ => kprintln!("Got: {}", e),
         }
     }
 }
